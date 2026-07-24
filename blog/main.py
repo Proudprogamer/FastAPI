@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends
 from . import schemas, models
 from .database import SessionLocal, engine
 from sqlalchemy.orm import Session
-
+from .hashing import Hash
 
 app = FastAPI()
 
@@ -54,3 +54,12 @@ def update_blog(id: int,request : schemas.BlogType, db : Session = Depends(get_d
     }, synchronize_session=False)
     db.commit()
     return {'updated'}
+
+
+@app.post('/create_user')
+def create_user(request : schemas.User, db : Session = Depends(get_db)):
+    new_user = models.User(name = request.name, email = request.email, password = Hash.hash_pass(request.password))
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
